@@ -1,3 +1,6 @@
+v0.10.0-EX-2015-01-20-21-36-WITA
+	+ Changes: key ESC to exit from application
+	+ Added new key binding "f" to toggle fullscreen mode
 v0.10.0 - Future
 	+ Added Numerical Aware Comparison (numacomp) as a sorting option.
 	+ Added Exif data reading on supported files through pyexiv2

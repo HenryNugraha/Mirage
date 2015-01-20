@@ -1,7 +1,7 @@
 # $HeadURL$
 # $Id$
 
-__version__ = "0.10-svn"
+__version__ = "0.10.0-EX-2015-01-20-21-36-WITA"
 
 __license__ = """
 Mirage, a fast GTK+ Image Viewer
@@ -324,7 +324,9 @@ class Base:
 			('Properties', gtk.STOCK_PROPERTIES, _('_Properties...'), None, _('Properties'), self.show_properties),
 			('Custom Actions', None, _('_Configure...'), None, _('Custom Actions'), self.show_custom_actions),
 			('MiscKeysMenuHidden', None, 'Keys'),
-			('Escape', None, '', 'Escape', _('Exit Full Screen'), self.leave_fullscreen),
+			#('Escape', None, '', 'Escape', _('Exit Full Screen'), self.leave_fullscreen),
+			# Change ESC to exit application
+			('Escape', None, '', 'Escape', _('Quit'), self.exit_app),
 			('Minus', None, '', 'minus', _('Zoom Out'), self.zoom_out),
 			('Plus', None, '', 'plus', _('Zoom In'), self.zoom_in),
 			('Equal', None, '', 'equal', _('Zoom In'), self.zoom_in),
@@ -336,6 +338,8 @@ class Base:
 			('Ctrl-KP_0', None, '', '<Ctrl>KP_0', _('Fit'), self.zoom_to_fit_window_action),
 			('Ctrl-KP_1', None, '', '<Ctrl>KP_1', _('1:1'), self.zoom_1_to_1_action),
 			('Full Screen Key', None, '', '<Shift>Return', None, self.enter_fullscreen),
+			# Set "f" as toggle fullscreen
+			('Toggle Full Screen', None, '', 'f', None, self.toggle_fullscreen),
 			('Prev', None, '', 'Up', _('Previous Image'), self.goto_prev_image),
 			('Next', None, '', 'Down', _('Next Image'), self.goto_next_image),
 			('PgUp', None, '', 'Page_Up', _('Previous Image'), self.goto_prev_image),
@@ -459,6 +463,7 @@ class Base:
 			      <menuitem action="Ctrl-KP_0"/>
 			      <menuitem action="Ctrl-KP_1"/>
 			      <menuitem action="Full Screen Key"/>
+			      <menuitem action="Toggle Full Screen"/>
 			      <menuitem action="Prev"/>
 			      <menuitem action="Next"/>
 			      <menuitem action="PgUp"/>
@@ -1963,6 +1968,12 @@ class Base:
 			self.set_slideshow_sensitivities()
 			if self.usettings['simple_bgcolor']:
 				self.layout.modify_bg(gtk.STATE_NORMAL, None)
+
+	def toggle_fullscreen(self, action):
+		if self.fullscreen_mode:
+			self.leave_fullscreen(action)
+		else:
+			self.enter_fullscreen(action)
 
 	def toggle_status_bar(self, action):
 		if self.statusbar.get_property('visible'):
