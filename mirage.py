@@ -1,7 +1,7 @@
 # $HeadURL$
 # $Id$
 
-__version__ = "0.10.0-EX-2015-01-20-21-36-WITA"
+__version__ = "0.10.0-EX-2015-01-21-17-24-WITA"
 
 __license__ = """
 Mirage, a fast GTK+ Image Viewer
@@ -63,7 +63,16 @@ try:
 	HAS_EXIF = True
 except:
 	HAS_EXIF = False
-	print "pyexiv2 module not found, exifdata reading/writing are disabled"
+	print "pyexiv2 module not found, exifdata reading/writing are disabled."
+
+try:
+	from PIL import ImageEnhance
+	from PIL import Image
+	import StringIO
+	PIL_LOADED = True
+except:
+	PIL_LOADED = False
+	print "PIL module not found, viewed image will not be enhanced."
 
 try:
 	import gconf
@@ -154,7 +163,7 @@ class Base:
 		self.usettings['statusbar_show'] = True
 		self.fullscreen_mode = False
 		self.opendialogpath = ""
-		self.zoom_quality = gtk.gdk.INTERP_BILINEAR
+		self.zoom_quality = gtk.gdk.INTERP_TILES
 		self.recursive = False
 		self.verbose = False
 		self.image_loaded = False
@@ -1652,6 +1661,8 @@ class Base:
 		self.center_image()
 		self.show_scrollbars_if_needed()
 		if not self.currimg.animation:
+			# Apply image enhancement
+			self.currimg.pixbuf = self.enhance_image(self.currimg.pixbuf)
 			self.imageview.set_from_pixbuf(self.currimg.pixbuf)
 			self.previmage_is_animation = False
 		else:
@@ -3240,7 +3251,7 @@ class Base:
 	def zoom_in(self, action):
 		if self.currimg.name != "" and self.UIManager.get_widget('/MainMenu/ViewMenu/In').get_property('sensitive'):
 			self.image_zoomed = True
-			self.currimg.zoomratio = self.currimg.zoomratio * 1.25
+			self.currimg.zoomratio = self.currimg.zoomratio * 1.1
 			self.set_zoom_sensitivities()
 			self.last_image_action_was_fit = False
 			self.put_zoom_image_to_window(False)
@@ -3252,7 +3263,7 @@ class Base:
 				# No point in proceeding..
 				return
 			self.image_zoomed = True
-			self.currimg.zoomratio = self.currimg.zoomratio * 1/1.25
+			self.currimg.zoomratio = self.currimg.zoomratio * 1/1.1
 			if self.currimg.zoomratio < self.min_zoomratio:
 				self.currimg.zoomratio = self.min_zoomratio
 			self.set_zoom_sensitivities()
@@ -4868,6 +4879,37 @@ class Base:
 			test = os.spawnlp(os.P_WAIT, "/usr/bin/xscreensaver-command", "xscreensaver-command", "-deactivate")
 			if test <> 127:
 				timer_screensaver = gobject.timeout_add(1000, self.disable_screensaver_in_slideshow_mode)
+
+	def enhance_image(self, image, intensity=1.0):
+		# This enhancement uses PIL's ImageEnhance which include converting
+		# Pixbuf to PIL then re-converting to Pixbuf. It may affect Mirage's
+		# performance heavily.
+		if PIL_LOADED:
+			# Converting Pixbuf to PIL
+			dimensions = image.get_width(), image.get_height()
+			stride = image.get_rowstride()
+			pixels = image.get_pixels()
+			mode = image.get_has_alpha() and "RGBA" or "RGB"
+			image = Image.frombuffer(mode, dimensions, pixels, "raw", mode, stride, 1)			
+			# Enhance image using PIL
+			enhancer = ImageEnhance.Color(image)
+			image = enhancer.enhance(1.1*intensity)
+			enhancer = ImageEnhance.Contrast(image)
+			image = enhancer.enhance(1.05*intensity)
+			enhancer = ImageEnhance.Brightness(image)
+			image = enhancer.enhance(0.985*intensity)
+			enhancer = ImageEnhance.Sharpness(image)
+			image = enhancer.enhance(2.2*intensity)
+			# Converting PIL to Pixbuf
+			tmpfile = StringIO.StringIO()
+			image.save(tmpfile, "ppm")
+			data = tmpfile.getvalue()
+			tmpfile.close()
+			loader = gtk.gdk.PixbufLoader("pnm")
+			loader.write(data, len(data))
+			image = loader.get_pixbuf()
+			loader.close()
+		return image
 
 	def main(self):
 		gtk.main()

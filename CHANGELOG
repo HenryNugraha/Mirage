@@ -1,3 +1,6 @@
+v0.10.0-EX-2015-01-21-17-24-WITA
+	+ Added image enhancement filter
+	+ Changes: reduced zoom step
 v0.10.0-EX-2015-01-20-21-36-WITA
 	+ Changes: key ESC to exit from application
 	+ Added new key binding "f" to toggle fullscreen mode
